@@ -1,12 +1,5 @@
-#!flask/bin/python
-from flask import Flask, jsonify, request
-from config import Configurator
-from bridgedata import BridgeData
-from marantz import MarantzIP
-
-import logging
-
-app = Flask(__name__)
+from flask import jsonify, request
+from marantzhueadapter import bridgeData, marantzIp
 
 @app.route('/')
 def index():
@@ -51,15 +44,3 @@ def handleLightStateUpdate(param, oldValue, newValue):
         marantzIp.set_power( newValue )
     elif param == 'bri':
         marantzIp.set_volume( int(newValue / 255 * int(config['Marantz']['maxvolume'])) )
-
-if __name__ == '__main__':
-    # init logging
-    logging.config.fileConfig('log.cfg')
-    logger = logging.getLogger('server')
-
-    logger.info('Starting marantz-hue-adapter server')
-    config = Configurator().config
-
-    marantzIp = MarantzIP( config['Marantz']['host'] )
-    bridgeData = BridgeData( config )
-    app.run(host=config['Server']['host'], port=int(config['Server']['port']), debug=True)
