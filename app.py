@@ -43,37 +43,13 @@ def init_globals():
         "manufacturername": "Philips",
         "uniqueid": "uniqfmradio",
         "swversion": "65003148",
-        "pointsymbol": {
-            "1": "none",
-            "2": "none",
-            "3": "none",
-            "4": "none",
-            "5": "none",
-            "6": "none",
-            "7": "none",
-            "8": "none"
-        }
+        "pointsymbol": {}
     },
   }
 
   api_username_response = {
       "lights": lights,
-      "groups": {
-          "1": {
-              "action": {
-                  "on": True,
-                  "bri": 254,
-                  "hue": 33536,
-                  "sat": 144,
-                  "xy": [0.3460, 0.3568],
-                  "ct": 201,
-                  "effect": "none",
-                  "colormode": "xy"
-              },
-              "lights": ["1"],
-              "name": "Group 1"
-          }
-      },
+      "groups": {},
       "config": {
           "name": bridge_config["name"],
           "zigbeechannel": 15,
@@ -173,7 +149,7 @@ def handleLightStateUpdate(param, oldValue, newValue):
   if param == 'on':
     marantz.set_power(newValue)
   elif param == 'bri':
-    marantz.set_volume( int(newValue / 255 * 50) )
+    marantz.set_volume( int(newValue / 255 * int(config['Marantz']['maxvolume'])) )
 
 def writeDefaultConfig():
   logger.debug('No config found. Writing default config to server.cfg. Please adapt accordingly and restart the server.')
@@ -191,7 +167,8 @@ def writeDefaultConfig():
     'user': 'MarantzHueUser',
   }
   config['Marantz'] = {
-    'ip': '192.168.0.x'
+    'ip': '192.168.0.x',
+    'maxvolume': '50'
   }
   with open('server.cfg', 'w') as configfile:
     config.write(configfile)
