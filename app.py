@@ -4,106 +4,15 @@ from functools import wraps
 from uuid import getnode as get_mac
 from marantz import MarantzIP
 import os, logging, logging.config, configparser
+from bridgedata import BridgeData
 
 app = Flask(__name__)
 
 def init_globals():
-    global marantz, bridge_config, lights, api_username_response
+    global marantz, bridgeData
 
     marantz = MarantzIP(config['Marantz']['host'])
-
-    bridge_config = {
-        "name": config['HueBridge']['name'], 
-        "swversion": "01033370",
-        "apiversion": "1.13.0",
-        "mac": config['HueBridge']['mac'],
-        "bridgeid": config['HueBridge']['bridgeid'],
-        "factorynew": False,
-        "replacesbridgeid": None,
-        "modelid": "BSB002"
-    }
-
-    lights = {
-        "1": {
-            "state": {
-                "on": True,
-                "bri": 255,
-                "hue": 0,
-                "sat": 0,
-                "xy": [0.0000, 0.0000],
-                "ct": 0,
-                "alert": "none",
-                "effect": "none",
-                "colormode": "hs",
-                "reachable": True
-            },
-            "type": "Extended color light",
-            "name": "FM Radio",
-            "modelid": "LCT001",
-            "manufacturername": "Philips",
-            "uniqueid": "uniqfmradio",
-            "swversion": "65003148",
-            "pointsymbol": {}
-        },
-    }
-
-    api_username_response = {
-        "lights": lights,
-        "groups": {},
-        "config": {
-            "name": bridge_config["name"],
-            "zigbeechannel": 15,
-            "bridgeid": bridge_config["bridgeid"],
-            "mac": bridge_config["mac"],
-            "dhcp": True,
-            "ipaddress": config['Server']['host'] + ":" + config['Server']['port'],
-            "netmask": config['Server']['netmask'],
-            "gateway": config['Server']['gateway'],
-            "proxyaddress": "none",
-            "proxyport": 0,
-            "UTC": "2016-06-30T18:21:35",
-            "localtime": "2016-06-30T20:21:35",
-            "timezone": "Europe/Berlin",
-            "modelid": bridge_config["modelid"],
-            "swversion": bridge_config["swversion"],
-            "apiversion": bridge_config["apiversion"],
-            "swupdate": {
-                "updatestate": 0,
-                "checkforupdate": False,
-                "devicetypes": {
-                    "bridge": False,
-                    "lights": [],
-                    "sensors": []
-                },
-                "url": "",
-                "text": "",
-                "notify": False
-            },
-            "linkbutton": False,
-            "portalservices": True,
-            "portalconnection": "connected",
-            "portalstate": {
-                "signedon": True,
-                "incoming": True,
-                "outgoing": True,
-                "communication": "disconnected"
-            },
-            "factorynew": bridge_config["factorynew"],
-            "replacesbridgeid": bridge_config["replacesbridgeid"],
-            "backup": {
-                "status": "idle",
-                "errorcode": 0
-            },
-            "whitelist": {
-                config['HueBridge']['user']: {
-                    "last use date": "2016-03-11T20:35:57",
-                    "create date": "2016-01-28T17:17:16",
-                    "name": "MarantzHueAdapter"
-                }
-            }
-        },
-        "schedules": {}
-    }
+    bridgeData = BridgeData(config)
 
 @app.route('/')
 def index():
@@ -112,7 +21,7 @@ def index():
 
 @app.route('/api/config', methods=['GET'])
 def api_config():
-    return jsonify( bridge_config )
+    return jsonify( bridgeData.config )
 
 @app.route('/api/', methods=['POST'])
 def create_user():
@@ -123,12 +32,12 @@ def api_username(username):
     if(username == "null"):
         return jsonify( [ { "error": { "type": 1, "address": "/", "description": "unauthorized user" } } ] )
     else:
-        return jsonify( api_username_response )
+        return jsonify( bridgeData.data )
 
 @app.route('/api/<string:username>/lights/<string:id>/name', methods=['PUT'])
 def lightsPutName(username, id):
     jsonData = request.get_json(force=True)
-    lights[id]["name"] = jsonData["name"]
+    bridgeData.lights[id]["name"] = jsonData["name"]
     return ""
 
 @app.route('/api/<string:username>/lights/<string:id>/state', methods=['PUT'])
@@ -136,10 +45,10 @@ def lightsPutState(username, id):
     jsonData = request.get_json(force=True)
     logger.debug(jsonData)
     for key, newValue in jsonData.items():
-        oldValue = lights[id]["state"][key]
+        oldValue = bridgeData.lights[id]["state"][key]
         if oldValue != newValue:
             handleLightStateUpdate(key, oldValue, newValue)
-            lights[id]["state"][key] = jsonData[key]
+            bridgeData.lights[id]["state"][key] = jsonData[key]
 
     return ""
 
