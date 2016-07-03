@@ -1,7 +1,4 @@
-import threading
-import telnetlib
-import re
-import sys
+import threading, telnetlib, re, sys, logging
 
 __author__ = 'Josh'
 
@@ -14,32 +11,33 @@ class MarantzIP():
         self.ip = ip
         self.timer = None  # threading.Timer(10, self.disconnect)
         self.conn = telnetlib.Telnet()
+        self.logger = logging.getLogger('server')
 
     def connect(self):
         try:
-            print("Testing existing connection..."),
+            self.logger.debug("Testing existing connection..."),
             self.conn.write("PING\r")
-            print("[CONNECTED]")
+            self.logger.debug("[CONNECTED]")
             self.reset_timer()
         except:
-            print("[DISCONNECTED]")
-            print("Connecting..."),
+            self.logger.debug("[DISCONNECTED]")
+            self.logger.debug("Connecting..."),
             self.conn.open(self.ip, 23, 3)
-            print("[CONNECTED]")
+            self.logger.debug("[CONNECTED]")
             self.start_timer()
         return self.conn
 
     def disconnect(self):
-        print("Disconnecting..."),
+        self.logger.debug("Disconnecting..."),
         self.conn.close()
-        print("[DISCONNECTED]")
+        self.logger.debug("[DISCONNECTED]")
 
     def start_timer(self):
         self.timer = threading.Timer(10, self.disconnect)
         self.timer.start()
 
     def reset_timer(self):
-        print("Resetting timer.")
+        self.logger.debug("Resetting timer.")
         self.timer.cancel()
         self.start_timer()
 
@@ -74,16 +72,16 @@ class MarantzIP():
             if pattern is None:
                 pattern = action+"([a-zA-Z0-9]*)\r"
             #send the command to the AVR
-            print("Clearing previous buffer...", t.read_very_eager().encode("string_escape"))
-            print(("Sending: '%s'" % command).encode('string_escape'))
-            print(("Looking for: '%s'" % pattern).encode('string_escape'))
+            self.logger.debug("Clearing previous buffer...", t.read_very_eager().encode("string_escape"))
+            self.logger.debug(("Sending: '%s'" % command).encode('string_escape'))
+            self.logger.debug(("Looking for: '%s'" % pattern).encode('string_escape'))
             t.write(command)
             find = t.expect([pattern], 1)
             if find[1] is None:
-                print >> sys.stderr, "[ERROR] Match failed. Trying one more time...Sending command again."
+                self.logger.error("[ERROR] Match failed. Trying one more time...Sending command again.")
                 t.write(command)
                 find = t.expect([pattern], 1)
-            print("Response:", (find[2]).encode("string_escape"))
+            self.logger.debug("Response:", (find[2]).encode("string_escape"))
             matches = find[1]
             response[action] = matches.group(1)
             #reset the pattern for the next run

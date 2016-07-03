@@ -3,6 +3,7 @@ from flask import Flask, jsonify, request, make_response
 from functools import wraps
 from uuid import getnode as get_mac
 from marantz import MarantzIP
+import os, logging, logging.config
 
 app = Flask(__name__)
 marantz = MarantzIP("192.168.0.x")
@@ -164,7 +165,7 @@ def lightsPutName(username, id):
 @app.route('/api/<string:username>/lights/<string:id>/state', methods=['PUT'])
 def lightsPutState(username, id):
   jsonData = request.get_json(force=True)
-  print(jsonData)
+  logger.debug(jsonData)
   for key, newValue in jsonData.items():
     oldValue = lights[id]["state"][key]
     if oldValue != newValue:
@@ -174,7 +175,7 @@ def lightsPutState(username, id):
   return ""
 
 def handleLightStateUpdate(param, oldValue, newValue):
-  print('handle update of', param, 'from', oldValue, 'to', newValue)
+  logger.debug('handle update of %s from %s to %s', param, oldValue, newValue)
 
   if param == 'on':
     marantz.set_power(newValue)
@@ -182,4 +183,9 @@ def handleLightStateUpdate(param, oldValue, newValue):
     marantz.set_volume( int(newValue / 255 * 50) )
 
 if __name__ == '__main__':
-    app.run(host=computer_config["ip"], port=computer_config["port"], debug=True)
+  # init logging
+  logging.config.fileConfig('log.cfg')
+  logger = logging.getLogger('server')
+
+  logger.info('Starting marantz-hue-adapter server')
+  app.run(host=computer_config["ip"], port=computer_config["port"], debug=True)
