@@ -5,12 +5,12 @@ import socket
 from io import BytesIO
 from http.server import BaseHTTPRequestHandler
 
-class SocketServer(asyncore.dispatcher):
+class AsyncSocketServer(asyncore.dispatcher):
 
     def __init__(self, address, handler):
         asyncore.dispatcher.__init__(self)
         
-        self.logger = logging.getLogger('SocketServer')
+        self.logger = logging.getLogger('AsyncSocketServer')
         self.logger.info('Opening socket')
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -22,14 +22,18 @@ class SocketServer(asyncore.dispatcher):
         self.handler = handler
 
         self.logger.info('Listening to connections')        
-        return
 
     def handle_accept(self):
         # Called when a client connects to our socket
         conn, address = self.accept()
         self.logger.info('Accepting connection on %s', address)
         self.handler(conn, address)
-        return
+
+    def start(self):
+        try:
+            asyncore.loop(timeout=2)
+        except KeyboardInterrupt:
+            print("Crtl+C pressed. Shutting down.")        
 
 class Request(BaseHTTPRequestHandler):
 
@@ -58,11 +62,11 @@ class Request(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write( payload )
 
-class HttpHandler(asynchat.async_chat):
+class AsyncHttpHandler(asynchat.async_chat):
 
     def __init__(self, sock, address):
         asynchat.async_chat.__init__(self, sock)
-        self.logger = logging.getLogger('HttpHandler')
+        self.logger = logging.getLogger('AsyncHttpHandler')
 
         self.request = Request(address)
         self.set_terminator( b'\r\n\r\n' ) #end of headers
@@ -83,8 +87,11 @@ class HttpHandler(asynchat.async_chat):
         if self.request.complete:
             mname = 'do_' + self.request.command
             if not hasattr(self, mname):
-                self.request.send_error(501, "Unsupported method (%r)" % self.request.command)
-                return
+                if hasattr(self, 'handle_any_request'):
+                    mname = 'handle_any_request'
+                else:
+                    self.request.send_error(501, "Unsupported method (%r)" % self.request.command)
+                    return
 
             method = getattr(self, mname)
             method(self.request)
@@ -92,25 +99,26 @@ class HttpHandler(asynchat.async_chat):
             self.push( bytearray( self.request.wfile.getbuffer() ) )
             self.close_when_done()
 
-    def do_GET(self, request):
-        self.logger.debug('Default GET method. Overwrite me.')
-        request.send_response(200, 'OK')
-        request.send_header('Connection', 'close')
-        request.write_response_payload(b'Default GET method. Overwrite me.')
-        pass
+    #def do_GET(self, request):
+    #    self.logger.debug('Default GET method. Overwrite me.')
+    #    request.send_response(200, 'OK')
+    #    request.send_header('Connection', 'close')
+    #    request.write_response_payload(b'Default GET method. Overwrite me.')
+    #    pass
 
-    def do_POST(self, request):
-        self.logger.debug('Default POST method. Overwrite me.')
-        request.send_response(200, 'OK')
-        request.send_header('Connection', 'close')
-        request.write_response_payload( b'Default POST method. Overwrite me.' )
-        pass
+    #def do_POST(self, request):
+    #    self.logger.debug('Default POST method. Overwrite me.')
+    #    request.send_response(200, 'OK')
+    #    request.send_header('Connection', 'close')
+    #    request.write_response_payload( b'Default POST method. Overwrite me.' )
+    #    pass
 
-logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s' )
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s' )
 
-server = SocketServer( ('localhost', 5000), HttpHandler )
+    server = AsyncSocketServer( ('localhost', 5000), AsyncHttpHandler )
 
-try:
-    asyncore.loop(timeout=2)
-except KeyboardInterrupt:
-    print("Crtl+C pressed. Shutting down.")
+    try:
+        asyncore.loop(timeout=2)
+    except KeyboardInterrupt:
+        print("Crtl+C pressed. Shutting down.")
