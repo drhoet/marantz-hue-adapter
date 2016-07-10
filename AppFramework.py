@@ -20,30 +20,49 @@ class ResponsePusher():
         return False
 
     def push(self, request, obj):
+        self.send_status_line(request, obj)
+        self.send_headers(request, obj)
+        self.send_payload(request, obj)
+
+    def send_status_line(self, request, obj):
         request.send_response(200, 'OK')
+
+    def send_headers(self, request, obj):
         request.send_header('Connection', 'close')
+
+    def send_payload(self, request, obj):
+        pass
 
 
 class BytesReponsePusher(ResponsePusher):
 
     def can_handle(self, obj):
-        return isinstance(obj, (bytes, bytearray))
+        return isinstance(obj, (bytes, bytearray, memoryview))
 
-    def push(self, request, obj):
-        super().push(request, obj)
+    def send_payload(self, request, obj):
         request.write_response_payload( obj )
 
 
-class JsonResponsePusher(ResponsePusher):
+class StringResponsePusher(BytesReponsePusher):
+
+    def can_handle(self, obj):
+        return isinstance(obj, (str))
+
+    def send_payload(self, request, obj):
+        super().send_payload(request, obj.encode('utf-8') ) #TODO fixme: encodings
+
+
+class JsonResponsePusher(StringResponsePusher):
 
     def can_handle(self, obj):
         return isinstance(obj, JsonResponse)
 
-    def push(self, request, obj):
-        super().push(request, obj)
+    def send_headers(self, request, obj):
+        super().send_headers(request, obj)
         request.send_header('Content-Type', 'application/json')
-        request.write_response_payload( json.dumps(obj.content).encode('utf-8') ) #TODO fixme: encodings
 
+    def send_payload(self, request, obj):
+        super().send_payload(request, json.dumps(obj.content))
 
 class App():
     """ A REST application mini-framework."""
