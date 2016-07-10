@@ -1,4 +1,4 @@
-from asyncHttpServer import AsyncHttpHandler, AsyncSocketServer
+from AsyncHttpServer import AsyncHttpHandler, AsyncSocketServer
 import logging, re, inspect
 
 routes = {}
@@ -18,7 +18,7 @@ def register_route(uri_pattern, handler_method, http_verb = 'GET'):
     routes[http_verb].append( (compiled_pattern, handler_method) )
 
 
-class AsyncRestHandler(AsyncHttpHandler):
+class AsyncRoutedHttpHandler(AsyncHttpHandler):
 
     def handle_any_request(self, request):
         for uri_pattern, handler_method in routes[ request.command ]:
@@ -39,7 +39,7 @@ if __name__ == '__main__':
         request.write_response_payload( b'method1 called' )
 
 
-    def method2(request):
+    def method2(request, val):
         request.send_response(200, 'OK')
         request.send_header('Connection', 'close')
         request.write_response_payload( b'method2 called with argument ' + val.encode('utf-8') ) #TODO fixme: encodings
@@ -47,5 +47,5 @@ if __name__ == '__main__':
     register_route('/api/?', method1, 'GET' )
     register_route('/api/(\d+)/?', method2, 'POST')
 
-    server = AsyncSocketServer( ('localhost', 5000), AsyncRestHandler )
+    server = AsyncSocketServer( ('localhost', 5000), AsyncRoutedHttpHandler )
     server.start()
