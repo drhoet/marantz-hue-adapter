@@ -12,8 +12,9 @@ def register_route(uri_pattern, handler_method, http_verb = 'GET'):
         uri_pattern = uri_pattern + '$'
 
     compiled_pattern = re.compile(uri_pattern)
-    if compiled_pattern.groups + 1 != len(inspect.signature( handler_method ).parameters):
-        raise Exception('pattern group count does not match method %s', handler_method)
+    sig = inspect.signature( handler_method )
+    if compiled_pattern.groups + 1 != len(sig.parameters):
+        raise Exception('pattern %s cannot be applied to method %s.%s: argument count doesn\'t match regex group count' % (uri_pattern, handler_method.__module__, handler_method.__name__))
     routes[http_verb].append( (compiled_pattern, handler_method) )
 
 
@@ -38,7 +39,7 @@ if __name__ == '__main__':
         request.write_response_payload( b'method1 called' )
 
 
-    def method2(request, val):
+    def method2(request):
         request.send_response(200, 'OK')
         request.send_header('Connection', 'close')
         request.write_response_payload( b'method2 called with argument ' + val.encode('utf-8') ) #TODO fixme: encodings
