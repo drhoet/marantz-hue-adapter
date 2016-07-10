@@ -5,7 +5,45 @@ import re
 import inspect
 import asyncore
 import sys
+import json
+import traceback
 from functools import wraps
+
+class JsonResponse():
+
+    def __init__(self, content):
+        self.content = content
+
+class ResponsePusher():
+
+    def can_handle(self, obj):
+        return False
+
+    def push(self, request, obj):
+        request.send_response(200, 'OK')
+        request.send_header('Connection', 'close')
+
+
+class BytesReponsePusher(ResponsePusher):
+
+    def can_handle(self, obj):
+        return isinstance(obj, (bytes, bytearray))
+
+    def push(self, request, obj):
+        super().push(request, obj)
+        request.write_response_payload( obj )
+
+
+class JsonResponsePusher(ResponsePusher):
+
+    def can_handle(self, obj):
+        return isinstance(obj, JsonResponse)
+
+    def push(self, request, obj):
+        super().push(request, obj)
+        request.send_header('Content-Type', 'application/json')
+        request.write_response_payload( json.dumps(obj.content).encode('utf-8') ) #TODO fixme: encodings
+
 
 class App():
     """ A REST application mini-framework."""
@@ -14,6 +52,7 @@ class App():
         """ Creates a new application with given name."""
         self.name = name
         self.routes = {}
+        self.response_pushers = [JsonResponsePusher(), BytesReponsePusher()]
 
         self.logger = logging.getLogger('App: ' + name)
 
@@ -47,13 +86,11 @@ class App():
         request -- the request
         response_obj -- the response to be pushed. Supported types are a string and a json object.
         """
-        if isinstance(response_obj, (bytes, bytearray)):
-            request.send_response(200, 'OK')
-            request.send_header('Connection', 'close')
-            request.write_response_payload( response_obj )
+        pusher = next( (p for p in self.response_pushers if p.can_handle( response_obj )), None)
+        if not pusher:
+            raise ValueError('return value cannot be written to response (unexpected type: %s)' % type(response_obj))
         else:
-            raise ValueError('return value of method %s.%s cannot be written to response (unexpected type: %s)'
-                % (func.__module__, func.__name__, type(response_obj)))
+            pusher.push(request, response_obj)
 
     def route(self, uri_pattern, http_verb='GET'):
         """ Decorator for defining a route.
@@ -72,7 +109,7 @@ class App():
                     return_val = func(*args, **kwargs)
                     self.push_response( request, return_val )
                 except:
-                    self.logger.error(sys.exc_info()[0])
+                    traceback.print_exc()
                     request.send_error(500, 'server exception happened')
             
             self.register_route(uri_pattern, write_to_response_decorator, http_verb)
