@@ -127,19 +127,20 @@ class AsyncHttpHandler(asynchat.async_chat):
             self.request._parse_request_payload()
 
         if self.request.complete:
-            mname = 'do_' + self.request.command
-            if not hasattr(self, mname):
-                if hasattr(self, 'handle_any_request'):
-                    mname = 'handle_any_request'
-                else:
-                    self.request.send_error(501, "Unsupported method (%r)" % self.request.command)
-                    return
+            try:
+                mname = 'do_' + self.request.command
+                if not hasattr(self, mname):
+                    if hasattr(self, 'handle_any_request'):
+                        mname = 'handle_any_request'
+                    else:
+                        self.request.send_error(501, "Unsupported method (%r)" % self.request.command)
+                        return
 
-            method = getattr(self, mname)
-            method(self.request)
-
-            self.push( bytearray( self.request.wfile.getbuffer() ) )
-            self.close_when_done()
+                method = getattr(self, mname)
+                method(self.request)
+            finally:
+                self.push( bytearray( self.request.wfile.getbuffer() ) )
+                self.close_when_done()
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s' )
