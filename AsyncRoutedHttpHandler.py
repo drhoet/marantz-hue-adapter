@@ -20,19 +20,31 @@ def register_route(uri_pattern, handler_method, http_verb = 'GET'):
 
 class AsyncRoutedHttpHandler(AsyncHttpHandler):
 
+    def __init__(self, sock, address, routes):
+        super().__init__(sock, address)
+        self.routes = routes
+
     def handle_any_request(self, request):
-        for uri_pattern, handler_method in routes[ request.command ]:
+        for uri_pattern, handler_method in self.routes[ request.command ]:
             match = uri_pattern.match( request.path )
             if match:
                 handler_method( request, *match.groups() )
                 return
         request.send_error(404, "Not found: %r" % request.path)
 
+    @staticmethod
+    def get_factory_with_routes(myroutes):
+        def factory_method(sock, address):
+            return AsyncRoutedHttpHandler(sock, address, myroutes)
+        return factory_method
 
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s' )
 
+    def async_routed_http_handler_factory( sock, address ):
+        return AsyncRoutedHttpHandler(sock, address, routes)
+	
     def method1(request):
         request.send_response(200, 'OK')
         request.send_header('Connection', 'close')
@@ -47,5 +59,5 @@ if __name__ == '__main__':
     register_route('/api/?', method1, 'GET' )
     register_route('/api/(\d+)/?', method2, 'POST')
 
-    server = AsyncSocketServer( ('localhost', 5000), AsyncRoutedHttpHandler )
+    server = AsyncSocketServer( ('localhost', 5000), AsyncRoutedHttpHandler.get_factory_with_routes( routes ) )
     server.start()

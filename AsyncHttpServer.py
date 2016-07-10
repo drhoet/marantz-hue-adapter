@@ -65,7 +65,7 @@ class Request(BaseHTTPRequestHandler):
 class AsyncHttpHandler(asynchat.async_chat):
 
     def __init__(self, sock, address):
-        asynchat.async_chat.__init__(self, sock)
+        super().__init__(sock)
         self.logger = logging.getLogger('AsyncHttpHandler')
 
         self.request = Request(address)
