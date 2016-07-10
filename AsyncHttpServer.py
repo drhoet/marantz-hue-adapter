@@ -22,7 +22,6 @@ class AsyncSocketServer(asyncore.dispatcher):
         asyncore.dispatcher.__init__(self)
         
         self.logger = logging.getLogger('AsyncSocketServer')
-        self.logger.info('Opening socket')
 
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.bind( address )
@@ -32,7 +31,7 @@ class AsyncSocketServer(asyncore.dispatcher):
         self.address = address
         self.handler = handler
 
-        self.logger.info('Listening to connections')        
+        self.logger.info('Listening to connections on %s:%d' % address)
 
     def handle_accept(self):
         # Called when a client connects to our socket

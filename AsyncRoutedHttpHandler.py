@@ -1,24 +1,5 @@
 from AsyncHttpServer import AsyncHttpHandler, AsyncSocketServer
 import logging
-import re
-import inspect
-
-routes = {}
-
-def register_route(uri_pattern, handler_method, http_verb = 'GET'):
-    if not http_verb in routes:
-        routes[http_verb] = []
-    if not uri_pattern.startswith('^'):
-        uri_pattern = '^' + uri_pattern
-    if not uri_pattern.endswith('$'):
-        uri_pattern = uri_pattern + '$'
-
-    compiled_pattern = re.compile(uri_pattern)
-    sig = inspect.signature( handler_method )
-    if compiled_pattern.groups + 1 != len(sig.parameters):
-        raise Exception('pattern %s cannot be applied to method %s.%s: argument count doesn\'t match regex group count' % (uri_pattern, handler_method.__module__, handler_method.__name__))
-    routes[http_verb].append( (compiled_pattern, handler_method) )
-
 
 class AsyncRoutedHttpHandler(AsyncHttpHandler):
     """ A request handler for the HTTP protocol that supports automatic routing.
@@ -41,6 +22,8 @@ class AsyncRoutedHttpHandler(AsyncHttpHandler):
         for uri_pattern, handler_method in self.routes[ request.command ]:
             match = uri_pattern.match( request.path )
             if match:
+                self.logger.debug('Handling request %s with method %s.%s'
+                    % (request.path, handler_method.__module__, handler_method.__name__))
                 handler_method( request, *match.groups() )
                 return
         request.send_error(404, "Not found: %r" % request.path)
