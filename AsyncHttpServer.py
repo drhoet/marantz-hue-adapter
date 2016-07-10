@@ -73,11 +73,14 @@ class Request(BaseHTTPRequestHandler):
     def _parse_request_header(self):
         self.rfile.seek(0)
         self.raw_requestline = self.rfile.readline()
-        super().parse_request()
 
-        self.required_data_length = int(self.headers.get('content-length', '0'))
-        self.complete = self.required_data_length == 0
-        self.rfile = BytesIO() # clear
+        if super().parse_request():
+            self.required_data_length = int(self.headers.get('content-length', '0'))
+            self.complete = self.required_data_length == 0
+            self.rfile = BytesIO() # clear
+            return True
+        else:
+            return False
 
     def _parse_request_payload(self):
         self.request_payload = bytearray( self.rfile.getbuffer() )
@@ -117,13 +120,15 @@ class AsyncHttpHandler(asynchat.async_chat):
         self.request.rfile.write( data )
 
     def found_terminator(self):
-        if not self.request.command:
-            self.request._parse_request_header() #TODO: handle error here
-
-            if not self.request.complete:
-                self.set_terminator( self.request.required_data_length ) #listen to the end of the data
-
-        else:
+        if not self.request.command: # parse headers
+            if self.request._parse_request_header():
+                if not self.request.complete:
+                    self.set_terminator( self.request.required_data_length ) #listen to the end of the data
+            else:
+                self.push( bytearray( self.request.wfile.getbuffer() ) )
+                self.close_when_done()
+                return
+        else: # parse payload
             self.request._parse_request_payload()
 
         if self.request.complete:
