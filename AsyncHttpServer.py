@@ -131,7 +131,7 @@ class AsyncHttpHandler(asynchat.async_chat):
         else: # parse payload
             self.request._parse_request_payload()
 
-        if self.request.complete:
+        if self.request.complete: # execute request
             try:
                 mname = 'do_' + self.request.command
                 if not hasattr(self, mname):
