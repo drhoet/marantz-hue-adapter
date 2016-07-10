@@ -1,5 +1,7 @@
 from AsyncHttpServer import AsyncHttpHandler, AsyncSocketServer
-import logging, re, inspect
+import logging
+import re
+import inspect
 
 routes = {}
 
@@ -19,8 +21,19 @@ def register_route(uri_pattern, handler_method, http_verb = 'GET'):
 
 
 class AsyncRoutedHttpHandler(AsyncHttpHandler):
+    """ A request handler for the HTTP protocol that supports automatic routing.
+
+    Register handler methods to this class. When receiving a request, a matching handler method will be found and called
+    with the request. If no handler method is found, an error 501 is returned to the requester.
+    """
 
     def __init__(self, sock, address, routes):
+        """ Create a new instance.
+
+        sock -- the socket
+        address -- the (host, port) tuple (only used for logging)
+        routes -- a map containing the routes. See set_routes for more information.
+        """
         super().__init__(sock, address)
         self.routes = routes
 
@@ -32,8 +45,24 @@ class AsyncRoutedHttpHandler(AsyncHttpHandler):
                 return
         request.send_error(404, "Not found: %r" % request.path)
 
+    def set_routes(routes):
+        """ Sets the routes for this handler.
+
+        routes -- a map with the supported routes. The keys to this map are the HTTP method. Each entry in the map MUST
+        be a tuple (regex, method), whereby regex is the regex used to match the URI in the request, and method is the
+        method that will be called when the regex matches. The first matching regex is selected.
+
+        The regex can contain groups. The matched values of these groups will be passed into the method as arguments.
+        The method MUST have the following signature: method(request, params...).
+        """
+        self.routes = routes
+
     @staticmethod
     def get_factory_with_routes(myroutes):
+        """ Create a factory for creating handlers
+
+        myroutes -- the routes that will be given to all instantiated handlers.
+        """
         def factory_method(sock, address):
             return AsyncRoutedHttpHandler(sock, address, myroutes)
         return factory_method
