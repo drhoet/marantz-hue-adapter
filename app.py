@@ -10,7 +10,7 @@ app = App(__name__)
 
 @app.route('/?')
 def index(request):
-    return b"Welcome to the Marantz Hue adapter. Control you marantz receiver as if it were a Hue Light!"
+    return "Welcome to the Marantz Hue adapter. Control you marantz receiver as if it were a Hue Light!"
 
 @app.route('/api/config/?', 'GET')
 def api_config(request):

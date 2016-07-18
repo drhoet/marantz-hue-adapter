@@ -86,7 +86,7 @@ class Request(BaseHTTPRequestHandler):
         self.request_payload = bytearray( self.rfile.getbuffer() )
         self.complete = True
 
-    def write_response_payload(self, payload): #TODO Make this a string!!
+    def write_response_payload(self, payload):
         """ Writes a response
 
         Writes a response to the output stream. This method also adds the Content-Length header and ends the headers

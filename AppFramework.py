@@ -7,12 +7,14 @@ import asyncore
 import sys
 import json
 import traceback
+import codecs
 from functools import wraps
 
 class JsonResponse():
 
     def __init__(self, content):
         self.content = content
+
 
 class ResponsePusher():
 
@@ -45,21 +47,34 @@ class BytesReponsePusher(ResponsePusher):
 
 class StringResponsePusher(BytesReponsePusher):
 
+    def __init__(self, content_type='text/html'):
+        self.content_type = content_type
+
     def can_handle(self, obj):
         return isinstance(obj, (str))
 
     def send_payload(self, request, obj):
-        super().send_payload(request, obj.encode('utf-8') ) #TODO fixme: encodings
+        # can't support multiple charset headers here, since the python library doesn't seem to support it. Would have
+        # to implement the header parsing myself to support it...
+        charset = request.headers.get('accept-charset', 'iso-8859-1')
+        charset = charset.split(',', 1)[0].split(';', 1)[0]
+        
+        try:
+            codecs.lookup(charset)
+        except LookupError:
+            charset = 'iso-8859-1'
+
+        request.send_header('Content-Type', self.content_type + '; ' + charset)
+        super().send_payload(request, obj.encode(charset, 'replace') )
 
 
 class JsonResponsePusher(StringResponsePusher):
 
+    def __init__(self):
+        super().__init__('application/json')
+
     def can_handle(self, obj):
         return isinstance(obj, JsonResponse)
-
-    def send_headers(self, request, obj):
-        super().send_headers(request, obj)
-        request.send_header('Content-Type', 'application/json')
 
     def send_payload(self, request, obj):
         super().send_payload(request, json.dumps(obj.content))
@@ -71,7 +86,7 @@ class App():
         """ Creates a new application with given name."""
         self.name = name
         self.routes = {}
-        self.response_pushers = [JsonResponsePusher(), BytesReponsePusher()]
+        self.response_pushers = [JsonResponsePusher(), BytesReponsePusher(), StringResponsePusher()]
 
         self.logger = logging.getLogger('App: ' + name)
 

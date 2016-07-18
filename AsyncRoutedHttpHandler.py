@@ -66,7 +66,7 @@ if __name__ == '__main__':
     def method2(request, val):
         request.send_response(200, 'OK')
         request.send_header('Connection', 'close')
-        request.write_response_payload( b'method2 called with argument ' + val.encode('utf-8') ) #TODO fixme: encodings
+        request.write_response_payload( b'method2 called with argument ' + val.encode('utf-8') )
 
     register_route('/api/?', method1, 'GET' )
     register_route('/api/(\d+)/?', method2, 'POST')
