@@ -10,6 +10,27 @@ import traceback
 import codecs
 from functools import wraps
 
+class RequestWrapper():
+
+    regex = re.compile('^\s*charset\s*=\s*([\w-]+)\s*$', re.I)
+
+    def __init__(self, request):
+        self.wrapped = request
+        self.headers = request.headers
+
+        content_type = request.headers.get('content-type', 'charset=iso-8859-1')
+
+        charset = None
+        for x in content_type.split(';'):
+            m = RequestWrapper.regex.search(x)
+            if m:
+                charset = m.group(1)
+                break
+        if not charset:
+            charset='iso-8859-1'
+        self.data = request.request_payload.decode(charset)
+
+
 class JsonResponse():
 
     def __init__(self, content):
@@ -64,7 +85,7 @@ class StringResponsePusher(BytesReponsePusher):
         except LookupError:
             charset = 'iso-8859-1'
 
-        request.send_header('Content-Type', self.content_type + '; ' + charset)
+        request.send_header('Content-Type', self.content_type + '; charset=' + charset)
         super().send_payload(request, obj.encode(charset, 'replace') )
 
 
@@ -87,7 +108,7 @@ class App():
         """ Creates a new application with given name."""
         self.name = name
         self.routes = {}
-        self.response_pushers = [JsonResponsePusher(), BytesReponsePusher(), StringResponsePusher()]
+        self.response_pushers = [JsonResponsePusher(), StringResponsePusher(), BytesReponsePusher()]
 
         self.logger = logging.getLogger('App: ' + name)
 
@@ -138,11 +159,10 @@ class App():
         def register_route_decorator(func):
             
             @wraps(func)
-            def write_to_response_decorator(*args, **kwargs):
+            def write_to_response_decorator(request, *args):
                 try:
-                    request = args[0]
-                    return_val = func(*args, **kwargs)
-                    self.push_response( request, return_val )
+                    return_val = func(RequestWrapper(request), *args)
+                    self.push_response(request, return_val)
                 except:
                     traceback.print_exc()
                     request.send_error(500, 'server exception happened')

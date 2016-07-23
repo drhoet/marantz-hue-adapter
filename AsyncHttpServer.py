@@ -68,7 +68,7 @@ class Request(BaseHTTPRequestHandler):
         self.rfile = BytesIO()
         self.wfile = BytesIO()
         self.command = None
-        self.request_payload = ''
+        self.request_payload = bytearray()
 
     def _parse_request_header(self):
         self.rfile.seek(0)

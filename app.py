@@ -29,13 +29,13 @@ def api_username(request, username):
 
 @app.route('/api/(\w+)/lights/(\w+)/name', 'PUT')
 def lightsPutName(request, username, id):
-    jsonData = json.loads(request.request_payload.decode('utf-8')) #TODO fixme: encodings
+    jsonData = json.loads(request.data)
     bridgeData.lights[id]["name"] = jsonData["name"]
     return ""
 
 @app.route('/api/(\w+)/lights/(\w+)/state', 'PUT')
 def lightsPutState(request, username, id):
-    jsonData = json.loads(request.request_payload.decode('utf-8')) #TODO fixme: encodings
+    jsonData = json.loads(request.data)
     logger.debug(jsonData)
     for key, newValue in jsonData.items():
         oldValue = bridgeData.lights[id]["state"][key]
