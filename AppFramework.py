@@ -79,6 +79,7 @@ class JsonResponsePusher(StringResponsePusher):
     def send_payload(self, request, obj):
         super().send_payload(request, json.dumps(obj.content))
 
+
 class App():
     """ A REST application mini-framework."""
 

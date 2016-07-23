@@ -36,7 +36,8 @@ class AsyncRoutedHttpHandler(AsyncHttpHandler):
         method that will be called when the regex matches. The first matching regex is selected.
 
         The regex can contain groups. The matched values of these groups will be passed into the method as arguments.
-        The method MUST have the following signature: method(request, params...).
+        The method MUST have the following signature: method(request, params...). The request parameter will be an
+        object of the AsyncHttpServer.Request class, params MUST match the number of groups in the regex.
         """
         self.routes = routes
 

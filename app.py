@@ -31,7 +31,7 @@ def api_username(request, username):
 def lightsPutName(request, username, id):
     jsonData = json.loads(request.request_payload.decode('utf-8')) #TODO fixme: encodings
     bridgeData.lights[id]["name"] = jsonData["name"]
-    return b""
+    return ""
 
 @app.route('/api/(\w+)/lights/(\w+)/state', 'PUT')
 def lightsPutState(request, username, id):
@@ -42,7 +42,7 @@ def lightsPutState(request, username, id):
         if oldValue != newValue:
             handleLightStateUpdate(key, oldValue, newValue)
             bridgeData.lights[id]["state"][key] = jsonData[key]
-    return b""
+    return ""
 
 def handleLightStateUpdate(param, oldValue, newValue):
     logger.debug('handle update of %s from %s to %s', param, oldValue, newValue)
