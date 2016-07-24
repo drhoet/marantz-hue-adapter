@@ -1,4 +1,5 @@
 import json
+import logging
 
 # Remark: this class is not thread-safe. It doesn't have to be, since everything is running on 1 thread: the server
 # is an async server...
@@ -68,10 +69,6 @@ class BridgeData():
             "schedules": {}
         }
 
-class LightStateListener():
-    def on_set_state_property(self, name, oldValue, newValue):
-        pass
-
 class Light():
 
     def __init__(self, name, uniqueid, manufacturername='drhoet', swversion='0'):
@@ -114,6 +111,19 @@ class Light():
         return { 'type': self.type, 'name': self.name, 'modelid': self.modelid, 'manufacturername': self.manufacturername,
             'uniqueid': self.uniqueid, 'swversion': self.swversion, 'state': self.state }
 
+class LightStateListener():
+
+    def __init__(self):
+        self.prop_func_map = {}
+        self.logger = logging.getLogger('LightStateListener')
+
+    def on_set_state_property(self, name, oldValue, newValue):
+        if name in self.prop_func_map:
+            self.prop_func_map[name](oldValue, newValue)
+        else:
+            self.logger.warn('Property not supported: %s', name)
+
+
 class DimmableLight(Light):
 
     def __init__(self, name, uniqueid):
@@ -136,6 +146,23 @@ class DimmableLight(Light):
     def set_reachable(self, value):
         self.internal_set_bool('reachable', value)
 
+class DimmableLightStateListener(LightStateListener):
+
+    def __init__(self):
+        super().__init__()
+        self.prop_func_map['on'] = self.on_power_changed
+        self.prop_func_map['bri'] = self.on_brightness_changed
+        self.prop_func_map['alert'] = self.on_alert_changed
+        self.prop_func_map['reachable'] = self.on_reachable_changed
+
+    def on_power_changed(self, value):
+        pass
+    def on_brightness_changed(self, value):
+        pass
+    def on_alert_changed(self, value):
+        pass
+    def on_reachable_changed(self, value):
+        pass
 
 class ExtendedColorLight(DimmableLight):
 
@@ -156,7 +183,29 @@ class ExtendedColorLight(DimmableLight):
             "reachable": True
         }
 
+class ExtendedColorLightStateListener(DimmableLightStateListener):
 
+    def __init__(self):
+        super().__init__()
+        self.prop_func_map['hue'] = self.on_hue_changed
+        self.prop_func_map['sat'] = self.on_saturation_changed
+        self.prop_func_map['xy'] = self.on_colorxy_changed
+        self.prop_func_map['ct'] = self.on_colorct_changed
+        self.prop_func_map['effect'] = self.on_effect_changed
+        self.prop_func_map['colormode'] = self.on_colormode_changed
+
+    def on_hue_changed(self, value):
+        pass
+    def on_saturation_changed(self, value):
+        pass
+    def on_colorxy_changed(self, value):
+        pass
+    def on_colorct_changed(self, value):
+        pass
+    def on_effect_changed(self, value):
+        pass
+    def on_colormode_changed(self, value):
+        pass
 
 class BridgeDataJSONEncoder(json.JSONEncoder):
 

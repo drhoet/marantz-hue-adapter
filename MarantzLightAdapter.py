@@ -1,11 +1,12 @@
 import logging
-from bridgedata import LightStateListener
+from bridgedata import ExtendedColorLightStateListener
 from marantz import MarantzIpListener
 import re
 
-class MarantzLightAdapter(LightStateListener, MarantzIpListener):
+class MarantzLightAdapter(ExtendedColorLightStateListener, MarantzIpListener):
 
     def __init__(self, config, light, marantzIp):
+        ExtendedColorLightStateListener.__init__(self)
         light.register_listener(self)
         marantzIp.register_listener(self)
         self.config = config
@@ -16,19 +17,10 @@ class MarantzLightAdapter(LightStateListener, MarantzIpListener):
     #########################################################
     # methods that handle the direction light -> marantz
     #########################################################
-    def on_set_state_property(self, name, oldValue, newValue):
-        mname = 'on_set_' + name.lower()
-        if hasattr(self, mname):
-            getattr(self, mname)(oldValue, newValue)
-        self.logger.warn('Ignoring state update: %s with value %s', name, newValue)
-
-    def set_state_property(self, property_name, property_value):
-        super().set_state_property(property_name, property_value)
-
-    def on_set_on(self, oldValue, newValue):
+    def on_power_changed(self, oldValue, newValue):
         self.marantzIp.set_power( newValue )
 
-    def on_set_bri(self, oldValue, newValue):
+    def on_brightness_changed(self, oldValue, newValue):
         self.marantzIp.set_volume( newValue / 255 * int(self.config['Marantz']['maxvolume']) )
 
     #########################################################
@@ -41,7 +33,7 @@ class MarantzLightAdapter(LightStateListener, MarantzIpListener):
         else:
             self.logger.warn('Ignoring command: %s with value %s', command, parameter)
 
-    def on_command_pw(self, parameter):
+    def on_command_zm(self, parameter):
         self.light.set_on(parameter == 'ON')
 
     def on_command_mv(self, parameter):
