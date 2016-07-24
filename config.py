@@ -30,6 +30,7 @@ class Configurator():
         }
         config['Marantz'] = {
             'ip': '192.168.0.x',
+            'port': '23',
             'maxvolume': '50'
         }
         with open('server.cfg', 'w') as configfile:

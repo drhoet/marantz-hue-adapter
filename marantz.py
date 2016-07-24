@@ -2,7 +2,6 @@ import threading, telnetlib, re, sys, logging
 
 __author__ = 'Josh'
 
-
 class MarantzIP():
     sources = ["TUNER", "DVD", "BD", "TV", "SAT", "SAT/CBL", "MPLAY", "GAME", "AUX1", "NET", "PANDORA", "SIRIUSXM",
                "LASTFM", "FLICKR", "FAVORITES", "IRADIO", "SERVER", "USB/IPOD", "USB", "IPD", "IRP", "FVP"]
@@ -147,3 +146,82 @@ class MarantzIP():
             raise TypeError("Expecting 0 <= updown <= 98. Received type: " + type(updown))
         self.write_command('MV%(vol)02d\r' % {'vol': updown } )
         # MV005\r@VOL:-795\rMVMAX 98\r
+
+import logging
+import asyncore
+import asynchat
+import socket
+from io import BytesIO
+import math
+
+class AsyncMarantzIpHandler(asynchat.async_chat):
+
+    def __init__(self, address):
+        super().__init__()
+        self.logger = logging.getLogger('AsyncMarantzIpHandler')
+        self.set_terminator( b'\r' )
+        self.rfile = BytesIO()
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connect( address )
+        self.listeners = []
+
+    def handle_connect(self):
+        self.logger.info('Connected!')
+
+    def handle_close(self):
+        self.logger.info('Closed!')
+
+    def collect_incoming_data(self, data):
+        self.rfile.write( data )
+
+    def found_terminator(self):
+        command = self.rfile.getvalue().decode('ascii')
+        self.rfile = BytesIO()
+
+        if len(command) < 2:
+            self.logger.warn('Invalid command received %s' % command)
+
+        self.logger.debug('received %s with param %s', command[:2], command[2:])
+        for listener in self.listeners:
+            listener.on_command(command[:2], command[2:])
+
+    def register_listener(self, listener):
+        self.listeners.append(listener)
+
+    def set_power(self, onoff):
+        if onoff:
+            self.push(b"PWON\r")
+        else:
+            self.push(b"PWSTANDBY\r")
+
+    def push_str(self, str):
+        self.push(str.encode('ascii'))
+
+    def set_volume(self, value):
+        frac, whole = math.modf(value)
+        if frac < 0.25:
+            self.push_str('MV%02d\r' % (whole))
+        elif frac > 0.75:
+            self.push_str('MV%02d\r' % (whole + 1) )
+        else:
+            self.push_str('MV%02d5\r' % (whole) )
+
+class MarantzIpListener():
+    def on_command(self, command, parameter):
+        pass
+
+if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG, format='%(name)s: %(message)s' )
+    logger = logging.getLogger('main')
+
+    class SillyHandler(MarantzIpListener):
+        def on_command(self, command, parameter):
+            logger.info('received %s with param %s' % (command, parameter))
+
+    handler = AsyncMarantzIpHandler( ('192.168.12.4', 23) )
+    handler.register_listener(SillyHandler())
+    try:
+        asyncore.loop()
+    except:
+        logger.info('stopping')
+        handler.close()

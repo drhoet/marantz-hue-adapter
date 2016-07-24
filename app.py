@@ -1,7 +1,8 @@
 from AppFramework import App, JsonResponse
 from config import Configurator
-from marantz import MarantzIP
 from bridgedata import BridgeData, BridgeDataJSONEncoder, ExtendedColorLight
+from marantz import AsyncMarantzIpHandler
+from MarantzLightAdapter import MarantzLightAdapter
 
 import logging
 import json
@@ -40,17 +41,8 @@ def lightsPutState(request, username, id):
     for key, newValue in jsonData.items():
         oldValue = bridgeData.lights[id].state[key]
         if oldValue != newValue:
-            handleLightStateUpdate(key, oldValue, newValue)
             bridgeData.lights[id].set_state_property(key, jsonData[key])
     return ""
-
-def handleLightStateUpdate(param, oldValue, newValue):
-    logger.debug('handle update of %s from %s to %s', param, oldValue, newValue)
-
-    if param == 'on':
-        marantzIp.set_power( newValue )
-    elif param == 'bri':
-        marantzIp.set_volume( int(newValue / 255 * int(config['Marantz']['maxvolume'])) )
 
 if __name__ == '__main__':
     # init logging
@@ -60,7 +52,8 @@ if __name__ == '__main__':
     logger.info('Starting marantz-hue-adapter server')
     config = Configurator().config
 
-    marantzIp = MarantzIP( config['Marantz']['host'] )
+    marantzIp = AsyncMarantzIpHandler( (config['Marantz']['host'], int(config['Marantz']['port'])) )
     bridgeData = BridgeData( config )
     bridgeData.lights['1'] = ExtendedColorLight('FM Radio', 'uniqfmradio')
+    adapter = MarantzLightAdapter( config, bridgeData.lights['1'], marantzIp )
     app.start(host=config['Server']['host'], port=int(config['Server']['port']), debug=True)
