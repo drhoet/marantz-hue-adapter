@@ -16,6 +16,7 @@ class AsyncRoutedHttpHandler(AsyncHttpHandler):
         routes -- a map containing the routes. See set_routes for more information.
         """
         super().__init__(sock, address)
+        self.logger = logging.getLogger('AsyncRoutedHttpHandler')
         self.routes = routes
 
     def handle_any_request(self, request):
