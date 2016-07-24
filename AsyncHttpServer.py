@@ -83,7 +83,7 @@ class Request(BaseHTTPRequestHandler):
             return False
 
     def _parse_request_payload(self):
-        self.request_payload = bytearray( self.rfile.getbuffer() )
+        self.request_payload = self.rfile.getvalue()
         self.complete = True
 
     def write_response_payload(self, payload):
@@ -125,7 +125,7 @@ class AsyncHttpHandler(asynchat.async_chat):
                 if not self.request.complete:
                     self.set_terminator( self.request.required_data_length ) #listen to the end of the data
             else:
-                self.push( bytearray( self.request.wfile.getbuffer() ) ) #make sure to push errors to the client
+                self.push( self.request.wfile.getvalue() ) #make sure to push errors to the client
                 self.close_when_done()
                 return
         else: # parse payload
@@ -144,7 +144,7 @@ class AsyncHttpHandler(asynchat.async_chat):
                 method = getattr(self, mname)
                 method(self.request)
             finally:
-                self.push( bytearray( self.request.wfile.getbuffer() ) ) #make sure to push any response to the client
+                self.push( self.request.wfile.getvalue() ) #make sure to push any response to the client
                 self.close_when_done()
 
 if __name__ == '__main__':
