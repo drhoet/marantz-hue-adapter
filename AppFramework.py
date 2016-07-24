@@ -33,8 +33,9 @@ class RequestWrapper():
 
 class JsonResponse():
 
-    def __init__(self, content):
+    def __init__(self, content, encoder = None):
         self.content = content
+        self.encoder = encoder
 
 
 class ResponsePusher():
@@ -98,7 +99,7 @@ class JsonResponsePusher(StringResponsePusher):
         return isinstance(obj, JsonResponse)
 
     def send_payload(self, request, obj):
-        super().send_payload(request, json.dumps(obj.content))
+        super().send_payload(request, json.dumps(obj.content, cls=obj.encoder))
 
 
 class App():

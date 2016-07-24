@@ -1,7 +1,7 @@
 from AppFramework import App, JsonResponse
 from config import Configurator
-from bridgedata import BridgeData
 from marantz import MarantzIP
+from bridgedata import BridgeData, BridgeDataJSONEncoder, ExtendedColorLight
 
 import logging
 import json
@@ -25,12 +25,12 @@ def api_username(request, username):
     if(username == "null"):
         return JsonResponse( [ { "error": { "type": 1, "address": "/", "description": "unauthorized user" } } ] )
     else:
-        return JsonResponse( bridgeData.data )
+        return JsonResponse( bridgeData.data, BridgeDataJSONEncoder )
 
 @app.route('/api/(\w+)/lights/(\w+)/name', 'PUT')
 def lightsPutName(request, username, id):
     jsonData = json.loads(request.data)
-    bridgeData.lights[id]["name"] = jsonData["name"]
+    bridgeData.lights[id].name = jsonData["name"]
     return ""
 
 @app.route('/api/(\w+)/lights/(\w+)/state', 'PUT')
@@ -38,10 +38,10 @@ def lightsPutState(request, username, id):
     jsonData = json.loads(request.data)
     logger.debug(jsonData)
     for key, newValue in jsonData.items():
-        oldValue = bridgeData.lights[id]["state"][key]
+        oldValue = bridgeData.lights[id].state[key]
         if oldValue != newValue:
             handleLightStateUpdate(key, oldValue, newValue)
-            bridgeData.lights[id]["state"][key] = jsonData[key]
+            bridgeData.lights[id].set_state_property(key, jsonData[key])
     return ""
 
 def handleLightStateUpdate(param, oldValue, newValue):
@@ -62,4 +62,5 @@ if __name__ == '__main__':
 
     marantzIp = MarantzIP( config['Marantz']['host'] )
     bridgeData = BridgeData( config )
+    bridgeData.lights['1'] = ExtendedColorLight('FM Radio', 'uniqfmradio')
     app.start(host=config['Server']['host'], port=int(config['Server']['port']), debug=True)
