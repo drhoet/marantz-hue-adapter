@@ -19,6 +19,11 @@ class MarantzIp(AsyncSocketHandler):
     def write_command(self, str):
         self.push(str.encode('ascii') + b'\r')
 
+    def handle_connect(self):
+        super().handle_connect()
+        self.write_command('ZM?')
+        self.write_command('MV?')
+
     def command_received(self, command):
         if len(command) < 2:
             self.logger.warn('Invalid command received %s' % command)
