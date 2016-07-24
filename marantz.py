@@ -12,7 +12,9 @@ class MarantzIp(AsyncSocketHandler):
         self.prop_func_map = {
             'ZM': self.handle_command_main_zone_power,
             'MV': self.handle_command_main_zone_volume,
+            'SI': self.handle_command_main_zone_input_source_changed,
         }
+        self.main_zone_powered_on = False
 
     def write_command(self, str):
         self.push(str.encode('ascii') + b'\r')
@@ -41,8 +43,10 @@ class MarantzIp(AsyncSocketHandler):
             self.write_command('ZMOFF')
 
     def handle_command_main_zone_power(self, parameter):
+        self.main_zone_powered_on = parameter == 'ON'
         for listener in self.listeners:
             listener.on_main_zone_power_changed( parameter == 'ON' )
+        self.write_command('SI?')
 
     def set_main_zone_volume(self, value):
         frac, whole = math.modf(value)
@@ -66,8 +70,18 @@ class MarantzIp(AsyncSocketHandler):
         for listener in self.listeners:
             listener.on_main_zone_volume_changed( newValue )
 
+    def set_main_zone_input_source(self, value):
+        self.write_command('SI' + value)
+
+    def handle_command_main_zone_input_source_changed(self, parameter):
+        for listener in self.listeners:
+            listener.on_main_zone_input_source_changed( parameter )
+
+
 class MarantzIpListener():
     def on_main_zone_power_changed(self, newValue):
         pass
     def on_main_zone_volume_changed(self, newValue):
+        pass
+    def on_main_zone_input_source_changed(self, newValue):
         pass

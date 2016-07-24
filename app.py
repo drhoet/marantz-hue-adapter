@@ -1,8 +1,8 @@
 from AppFramework import App, JsonResponse
 from config import Configurator
-from bridgedata import BridgeData, BridgeDataJSONEncoder, ExtendedColorLight
+from bridgedata import BridgeData, BridgeDataJSONEncoder, ExtendedColorLight, DimmableLight
 from marantz import MarantzIp
-from MarantzLightAdapter import MarantzLightAdapter
+import MarantzLightAdapter
 
 import logging
 import json
@@ -54,6 +54,9 @@ if __name__ == '__main__':
 
     marantzIp = MarantzIp( (config['Marantz']['host'], int(config['Marantz']['port'])) )
     bridgeData = BridgeData( config )
-    bridgeData.lights['1'] = ExtendedColorLight('FM Radio', 'uniqfmradio')
-    adapter = MarantzLightAdapter( config, bridgeData.lights['1'], marantzIp )
+    bridgeData.lights['1'] = ExtendedColorLight('Marantz FM', 'uniqfmradio')
+    bridgeData.lights['2'] = DimmableLight('Marantz Media Player', 'uniqmediaplayer')
+    
+    MarantzLightAdapter.MarantzFmRadioLightAdapter( config, bridgeData.lights['1'], marantzIp )
+    MarantzLightAdapter.MarantzMediaPlayerLightAdapter( config, bridgeData.lights['2'], marantzIp )
     app.start(host=config['Server']['host'], port=int(config['Server']['port']), debug=True)
