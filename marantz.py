@@ -190,9 +190,9 @@ class AsyncMarantzIpHandler(asynchat.async_chat):
 
     def set_power(self, onoff):
         if onoff:
-            self.push(b"PWON\r")
+            self.push(b"ZMON\r")
         else:
-            self.push(b"PWSTANDBY\r")
+            self.push(b"ZMOFF\r")
 
     def push_str(self, str):
         self.push(str.encode('ascii'))
