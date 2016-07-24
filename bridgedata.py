@@ -150,18 +150,18 @@ class DimmableLightStateListener(LightStateListener):
 
     def __init__(self):
         super().__init__()
-        self.prop_func_map['on'] = self.on_power_changed
-        self.prop_func_map['bri'] = self.on_brightness_changed
-        self.prop_func_map['alert'] = self.on_alert_changed
-        self.prop_func_map['reachable'] = self.on_reachable_changed
+        self.prop_func_map['on'] = self.on_set_power
+        self.prop_func_map['bri'] = self.on_set_brightness
+        self.prop_func_map['alert'] = self.on_set_alert
+        self.prop_func_map['reachable'] = self.on_set_reachable
 
-    def on_power_changed(self, value):
+    def on_set_power(self, value):
         pass
-    def on_brightness_changed(self, value):
+    def on_set_brightness(self, value):
         pass
-    def on_alert_changed(self, value):
+    def on_set_alert(self, value):
         pass
-    def on_reachable_changed(self, value):
+    def on_set_reachable(self, value):
         pass
 
 class ExtendedColorLight(DimmableLight):
@@ -187,24 +187,24 @@ class ExtendedColorLightStateListener(DimmableLightStateListener):
 
     def __init__(self):
         super().__init__()
-        self.prop_func_map['hue'] = self.on_hue_changed
-        self.prop_func_map['sat'] = self.on_saturation_changed
-        self.prop_func_map['xy'] = self.on_colorxy_changed
-        self.prop_func_map['ct'] = self.on_colorct_changed
-        self.prop_func_map['effect'] = self.on_effect_changed
-        self.prop_func_map['colormode'] = self.on_colormode_changed
+        self.prop_func_map['hue'] = self.on_set_hue
+        self.prop_func_map['sat'] = self.on_set_saturation
+        self.prop_func_map['xy'] = self.on_set_colorxy
+        self.prop_func_map['ct'] = self.on_set_colorct
+        self.prop_func_map['effect'] = self.on_set_effect
+        self.prop_func_map['colormode'] = self.on_set_colormode
 
-    def on_hue_changed(self, value):
+    def on_set_hue(self, value):
         pass
-    def on_saturation_changed(self, value):
+    def on_set_saturation(self, value):
         pass
-    def on_colorxy_changed(self, value):
+    def on_set_colorxy(self, value):
         pass
-    def on_colorct_changed(self, value):
+    def on_set_colorct(self, value):
         pass
-    def on_effect_changed(self, value):
+    def on_set_effect(self, value):
         pass
-    def on_colormode_changed(self, value):
+    def on_set_colormode(self, value):
         pass
 
 class BridgeDataJSONEncoder(json.JSONEncoder):

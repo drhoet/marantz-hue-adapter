@@ -1,7 +1,7 @@
 from AppFramework import App, JsonResponse
 from config import Configurator
 from bridgedata import BridgeData, BridgeDataJSONEncoder, ExtendedColorLight
-from marantz import AsyncMarantzIpHandler
+from marantz import MarantzIp
 from MarantzLightAdapter import MarantzLightAdapter
 
 import logging
@@ -52,7 +52,7 @@ if __name__ == '__main__':
     logger.info('Starting marantz-hue-adapter server')
     config = Configurator().config
 
-    marantzIp = AsyncMarantzIpHandler( (config['Marantz']['host'], int(config['Marantz']['port'])) )
+    marantzIp = MarantzIp( (config['Marantz']['host'], int(config['Marantz']['port'])) )
     bridgeData = BridgeData( config )
     bridgeData.lights['1'] = ExtendedColorLight('FM Radio', 'uniqfmradio')
     adapter = MarantzLightAdapter( config, bridgeData.lights['1'], marantzIp )
