@@ -17,6 +17,7 @@ class MarantzIp(AsyncSocketHandler):
         self.main_zone_powered_on = False
 
     def write_command(self, str):
+        self.logger.debug('Writing command to device: %s', str)
         self.push(str.encode('ascii') + b'\r')
 
     def handle_connect(self):
