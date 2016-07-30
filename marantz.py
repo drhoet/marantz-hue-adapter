@@ -45,6 +45,7 @@ class MarantzIp(AsyncSocketHandler):
         self.listeners.append(listener)
 
     def set_main_zone_power(self, onoff):
+        self.logger.debug('Setting main zone power to: %s', onoff)
         if onoff:
             self.write_command('ZMON')
         else:
@@ -57,6 +58,7 @@ class MarantzIp(AsyncSocketHandler):
         self.write_command('SI?')
 
     def set_main_zone_volume(self, value):
+        self.logger.debug('Setting main zone volume to: %d', value)
         frac, whole = math.modf(value)
         if frac < 0.25:
             self.write_command('MV%02d' % (whole))
@@ -74,11 +76,11 @@ class MarantzIp(AsyncSocketHandler):
             self.logger.debug('Ignoring invalid volume value %s', parameter)
             return
         
-        self.logger.debug('Setting brightness to: %s', newValue)
         for listener in self.listeners:
             listener.on_main_zone_volume_changed( newValue )
 
     def set_main_zone_input_source(self, value):
+        self.logger.debug('Setting main zone input source to: %d', value)
         self.write_command('SI' + value)
 
     def handle_command_main_zone_input_source_changed(self, parameter):
@@ -86,6 +88,7 @@ class MarantzIp(AsyncSocketHandler):
             listener.on_main_zone_input_source_changed( parameter )
 
     def set_tuner_freq(self, value):
+        self.logger.debug('Setting tuner frequency to: %d', value)
         if value >= 87.5 and value <= 108.0:
             # FM!
             self.write_command('TFAN%06d' % (int)(value * 100))

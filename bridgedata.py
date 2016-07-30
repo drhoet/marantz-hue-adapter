@@ -118,6 +118,7 @@ class LightStateListener():
         self.logger = logging.getLogger('LightStateListener')
 
     def on_set_state_property(self, name, oldValue, newValue):
+        self.logger.debug('Setting %s to: %s', name, newValue)
         if name in self.prop_func_map:
             self.prop_func_map[name](oldValue, newValue)
         else:
