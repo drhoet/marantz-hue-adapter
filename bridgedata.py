@@ -155,13 +155,13 @@ class DimmableLightStateListener(LightStateListener):
         self.prop_func_map['alert'] = self.on_set_alert
         self.prop_func_map['reachable'] = self.on_set_reachable
 
-    def on_set_power(self, value):
+    def on_set_power(self, oldValue, newValue):
         pass
-    def on_set_brightness(self, value):
+    def on_set_brightness(self, oldValue, newValue):
         pass
-    def on_set_alert(self, value):
+    def on_set_alert(self, oldValue, newValue):
         pass
-    def on_set_reachable(self, value):
+    def on_set_reachable(self, oldValue, newValue):
         pass
 
 class ExtendedColorLight(DimmableLight):
@@ -194,17 +194,17 @@ class ExtendedColorLightStateListener(DimmableLightStateListener):
         self.prop_func_map['effect'] = self.on_set_effect
         self.prop_func_map['colormode'] = self.on_set_colormode
 
-    def on_set_hue(self, value):
+    def on_set_hue(self, oldValue, newValue):
         pass
-    def on_set_saturation(self, value):
+    def on_set_saturation(self, oldValue, newValue):
         pass
-    def on_set_colorxy(self, value):
+    def on_set_colorxy(self, oldValue, newValue):
         pass
-    def on_set_colorct(self, value):
+    def on_set_colorct(self, oldValue, newValue):
         pass
-    def on_set_effect(self, value):
+    def on_set_effect(self, oldValue, newValue):
         pass
-    def on_set_colormode(self, value):
+    def on_set_colormode(self, oldValue, newValue):
         pass
 
 class BridgeDataJSONEncoder(json.JSONEncoder):
