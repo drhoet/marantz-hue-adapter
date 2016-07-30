@@ -2,6 +2,8 @@ import logging
 from bridgedata import ExtendedColorLightStateListener, DimmableLightStateListener
 from marantz import MarantzIpListener
 import re
+from colorspaces import gamut_c
+import math
 
 class PowerMixin():
 
@@ -49,6 +51,16 @@ class MarantzFmRadioLightAdapter(PowerMixin, VolumeMixin, ExtendedColorLightStat
         self.data = []
         self.fileindex = 0
 
+    def dist(self, x1, x2):
+        return math.sqrt((x1[0] - x2[0])**2 + (x1[1] - x2[1])**2)
+
+    def on_set_colorxy(self, oldValue, newValue):
+        index, xy = min(enumerate(gamut_c), key=lambda x: self.dist(newValue, x[1]))
+        self.marantzIp.set_tuner_freq(index / 20.0 + 87.50)
+
+    def on_tuner_freq_changed(self, newValue):
+        xy = gamut_c[(int)((newValue-87.50)*20)]
+        self.light.set_xy(xy)
 
 
 class MarantzMediaPlayerLightAdapter(PowerMixin, VolumeMixin, DimmableLightStateListener, MarantzIpListener):

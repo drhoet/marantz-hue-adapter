@@ -170,7 +170,7 @@ class ExtendedColorLight(DimmableLight):
     def __init__(self, name, uniqueid):
         super().__init__(name, uniqueid)
         self.type = 'Extended color light'
-        self.modelid = 'LCT001'
+        self.modelid = 'LLC020' #taking a HueGo: color gamut C is richer than gamut B
         self.state = {
             "on": True,
             "bri": 255,
@@ -183,6 +183,9 @@ class ExtendedColorLight(DimmableLight):
             "colormode": "hs",
             "reachable": True
         }
+
+    def set_xy(self, value):
+        self.internal_set_state_property('xy', value)
 
 class ExtendedColorLightStateListener(DimmableLightStateListener):
 
