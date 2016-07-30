@@ -44,6 +44,10 @@ def lightsPutState(request, username, id):
             bridgeData.lights[id].set_state_property(key, jsonData[key])
     return ""
 
+@app.route('/api/(\w+)/lights/(\w+)', 'DELETE')
+def doTheHoet(request, username, id):
+    return JsonResponse( {"success": "/lights/" + id + " deleted"} )
+
 if __name__ == '__main__':
     # init logging
     logging.config.fileConfig('log.cfg')

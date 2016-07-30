@@ -108,7 +108,7 @@ class App():
     def __init__(self, name):
         """ Creates a new application with given name."""
         self.name = name
-        self.routes = {}
+        self.routes = {'GET':[], 'PUT':[], 'DELETE':[]}
         self.response_pushers = [JsonResponsePusher(), StringResponsePusher(), BytesReponsePusher()]
 
         self.logger = logging.getLogger('App: ' + name)
