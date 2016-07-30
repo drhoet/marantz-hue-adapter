@@ -7,26 +7,31 @@ from traitsui.api import View, Item, HSplit, Group, VGroup
 from mayavi.core.ui.api import MlabSceneModel, SceneEditor
 
 ################################################################################
-# Remark: I used this script to find a good frequency -> xy values mapping.
-# I generated, as carefully as I could, all xy values the app would send to the
-# lamp. I did this by SLOOOOOOOWLY sliding through the slider, and printing out
-# all xy values I received, in order. I made 3 of those files, which are ofc a
-# bit different due to the speed I used not being constant, as I'm not a robot.
-# I then used this script to perfect a B-spline interpolation. On the screen,
-# you can input a value for the smoothing factor s and recalculate + redraw the
-# interpolated function. I found a value of 0.001 for s to be good.
-# The xy values are then printed to the console, for frequencies 87.5 -> 108.00.
-# These values are copied in the MarantzFmRadioLightAdapter, since I didn't
-# want to add the dependency to scipy there.
-#
-# I executed this script in Enthought Canopy Version: 1.7.4.3348 (64 bit).
-# Required packages:
-# - numpy 1.10.4-1
-# - mayavi 4.4.3-10
-# - vtk 6.3.0-4
-# - scipy 0.17.1-1
-# - traits 4.5.0-1
-# - traitsui 5.1.0-1
+# Remark: I used this script to find a good frequency -> xy values mapping.    #
+# I generated, as carefully as I could, all xy values the app would send to    #
+# the lamp. I did this by SLOOOOOOOWLY sliding through the slider, and         #
+# printing out all xy values I received, in order. I made 3 of those files,    #
+# which are ofc a bit different due to the speed I used not being constant, as #
+# I'm not a robot.                                                             #
+# I then used this script to find a good B-spline interpolation. On the screen #
+# you can input a value for the smoothing factor s and recalculate + redraw    #
+# the interpolated function. I found a value of 0.001 for s to be good.        #
+# On the interpolated function, 411 equidistant samples are taken, one for     #
+# 0.05 frequency in the range 87.5 -> 108.00.                                  #
+# The xy values are then printed to the console.                               #
+#                                                                              #
+# These values are copied in the colorspaces.py, since I didn't want to add    #
+# the dependency to scipy there.                                               #
+#                                                                              #
+# I executed this script in Enthought Canopy Version: 1.7.4.3348 (64 bit).     #
+# Required packages:                                                           #
+# - numpy 1.10.4-1                                                             #
+# - mayavi 4.4.3-10                                                            #
+# - vtk 6.3.0-4                                                                #
+# - scipy 0.17.1-1                                                             #
+# - traits 4.5.0-1                                                             #
+# - traitsui 5.1.0-1                                                           #
+################################################################################
 
 def read_file(filename):
     linenb = 0

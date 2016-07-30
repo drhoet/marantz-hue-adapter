@@ -1,3 +1,4 @@
+# these is a list of the xy values for a Hue Go light, mapped to the 411 FM frequencies. See also analysis/color_space_analysis.py
 gamut_c = [
  [0.153942405912,0.0489619046827],
  [0.153479136279,0.0485072480838],
